@@ -129,11 +129,11 @@ class ArucoNode(rclpy.node.Node):
 
         # Set up subscriptions
         self.info_sub = self.create_subscription(
-            CameraInfo, info_topic, self.info_callback, qos_profile_sensor_data
+            CameraInfo, info_topic, self.info_callback, 10
         )
 
         self.create_subscription(
-            Image, image_topic, self.image_callback, qos_profile_sensor_data
+            Image, image_topic, self.image_callback, 10
         )
 
         # Set up publishers
@@ -145,11 +145,13 @@ class ArucoNode(rclpy.node.Node):
         self.intrinsic_mat = None
         self.distortion = None
 
-        self.aruco_dictionary = cv2.aruco.Dictionary_get(dictionary_id)
-        self.aruco_parameters = cv2.aruco.DetectorParameters_create()
+        self.aruco_dictionary = cv2.aruco.getPredefinedDictionary(dictionary_id)
+        self.aruco_parameters = cv2.aruco.DetectorParameters()
         self.bridge = CvBridge()
+        self.get_logger().info("complete node creation")
 
     def info_callback(self, info_msg):
+        # self.get_logger().info("get camera info ")
         self.info_msg = info_msg
         self.intrinsic_mat = np.reshape(np.array(self.info_msg.k), (3, 3))
         self.distortion = np.array(self.info_msg.d)
@@ -157,10 +159,11 @@ class ArucoNode(rclpy.node.Node):
         self.destroy_subscription(self.info_sub)
 
     def image_callback(self, img_msg):
+        # self.get_logger().info("get image")
         if self.info_msg is None:
             self.get_logger().warn("No camera info has been received!")
             return
-
+        
         cv_image = self.bridge.imgmsg_to_cv2(img_msg, desired_encoding="mono8")
         markers = ArucoMarkers()
         pose_array = PoseArray()
@@ -204,10 +207,8 @@ class ArucoNode(rclpy.node.Node):
                 pose_array.poses.append(pose)
                 markers.poses.append(pose)
                 markers.marker_ids.append(marker_id[0])
-
             self.poses_pub.publish(pose_array)
             self.markers_pub.publish(markers)
-
 
 def main():
     rclpy.init()
