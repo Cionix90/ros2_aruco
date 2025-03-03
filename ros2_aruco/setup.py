@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'aruco_node = ros2_aruco.aruco_node:main',
+            'aruco_tf_node = ros2_aruco.aruco_tf_node:main',
             'aruco_generate_marker = ros2_aruco.aruco_generate_marker:main'
         ],
     },
